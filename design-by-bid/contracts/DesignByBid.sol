@@ -99,7 +99,8 @@ contract DesignByBid {
 
         uint payment = projects[_projectId].milestones[_milestoneIndex];
         projects[_projectId].milestonePaid[_milestoneIndex] = true;
-        payable(projects[_projectId].selectedBidder).transfer(payment);
+        (bool success,) = payable(projects[_projectId].selectedBidder).call{value : payment}("");
+        require(success, 'Transfer failed');
         emit MilestonePaid(_projectId, _milestoneIndex);
     }
 
