@@ -45,7 +45,7 @@ describe("DesignByBid Contract", function () {
     const bidAmount = ethers.parseEther("3.0");
     const proposedMilestones = [ethers.parseEther("1.0"), ethers.parseEther("2.0")];
 
-    const tx = await contract.connect(bidder1).submitBid(projectId, bidAmount, 15, proposedMilestones);
+    const tx = await (contract.connect(bidder1) as Contract).submitBid(1, bidAmount, 15, proposedMilestones);
     const receipt = await tx.wait();
 
     const eventLog = receipt.logs.find(log => log.fragment?.name === "BidSubmitted");
@@ -53,8 +53,58 @@ describe("DesignByBid Contract", function () {
     expect(eventLog).to.not.be.undefined;
     const eventArgs = eventLog.args;
 
-    expect(eventArgs[1]).to.equal(bidder1.address); // bidder
+    expect(eventArgs[2]).to.equal(bidder1.address); // bidder
   });
 
+  it("Should allow the owner to select a bid", async function () {
+    const tx = await (contract.connect(owner) as Contract).selectBid(1, 0);
+    const receipt = await tx.wait();
+
+    const eventLog = receipt.logs.find(log => log.fragment?.name === "BidSelected");
+
+    expect(eventLog).to.not.be.undefined;
+    const eventArgs = eventLog.args;
+
+    expect(eventArgs[1]).to.equal(bidder1.address); // selectedBidder
+});
+
+it("Should allow the owner to release milestone payments", async function () {
+    await owner.sendTransaction({
+        to: contract.target,
+        value: ethers.parseEther("3.0")
+    });
+
+    const tx = await (contract.connect(owner) as Contract).releaseMilestonePayment(1, 0);
+    const receipt = await tx.wait();
+
+    const eventLog = receipt.logs.find(log => log.fragment?.name === "MilestonePaid");
+    expect(eventLog).to.not.be.undefined;
+
+});
+
+it("Should allow the bidder to raise a dispute", async function () {
+    const tx =  await (contract.connect(bidder1) as Contract).raiseDispute(1, "Milestone not met");
+    const receipt = await tx.wait();
+
+    const eventLog = receipt.logs.find(log => log.fragment?.name === "DisputeRaised");
+
+    expect(eventLog).to.not.be.undefined;
+    const eventArgs = eventLog.args;
+
+    expect(eventArgs[2]).to.equal(bidder1.address); // disputant
+});
+
+it("Should allow stakeholders to vote on a dispute", async function () {
+    const disputeId = 1;
+
+    const txYes = await (contract.connect(owner) as Contract).voteOnDispute(disputeId, true);
+    await txYes.wait();
+
+    // const txNo = await (contract.connect(bidder2) as Contract).voteOnDispute(disputeId, false);
+    // await txNo.wait();
+
+    const dispute = await contract.disputes(disputeId);
+    expect(dispute.resolved).to.be.true;
+});
 
 });
