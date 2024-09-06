@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react';
-import { fetchProjects } from '../app/utilities/contract';
+import { useContract } from '../app/utilities/contract';
 import ProjectList from '../app/components/ProjectList';
 
 const Home = () => {
@@ -13,17 +13,16 @@ const Home = () => {
     walletConnector = (window as any).ethereum
   }
   
+  const { fetchProjects } = useContract();
 
   useEffect(() => {
-    if (walletConnector) {
-      
-      fetchProjects()
-      .then((projects)=>{
-        console.log(projects,'nothign')
-      })
-     
-    }
-  }, [walletConnector]);
+    const loadProjects = async () => {
+      const projects = await fetchProjects();
+      setProjects(projects); 
+    };
+
+    loadProjects();
+  }, [fetchProjects]);
 
   return (
     <div className="container mx-auto">
