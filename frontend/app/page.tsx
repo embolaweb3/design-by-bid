@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from 'react';
 import { fetchProjects } from '../app/utilities/contract';
 import ProjectList from '../app/components/ProjectList';
@@ -7,7 +9,7 @@ const Home = () => {
 
   let walletConnector:any
 
-  if(typeof window !==undefined){
+  if(typeof window !=='undefined'){
     walletConnector = (window as any).ethereum
   }
   
@@ -15,7 +17,11 @@ const Home = () => {
   useEffect(() => {
     if (walletConnector) {
       
-      fetchProjects(library).then(setProjects);
+      fetchProjects()
+      .then((projects)=>{
+        console.log(projects,'nothign')
+      })
+     
     }
   }, [walletConnector]);
 
